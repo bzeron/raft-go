@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"playground-go/raft/transport/pb"
+	"raft/transport/pb"
 	"sync"
 	"time"
 
