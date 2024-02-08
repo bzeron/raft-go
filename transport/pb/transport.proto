@@ -1,0 +1,128 @@
+syntax = "proto3";
+
+package transport;
+
+option go_package = "raft/transport/pb;pb";
+
+import "google/protobuf/timestamp.proto";
+
+enum ProtocolVersion {
+  PROTOCOL_VERSION_MIN = 0;
+  PROTOCOL_VERSION_MAX = 3;
+}
+
+message RPCHeader {
+  ProtocolVersion ProtocolVersion = 1;
+  bytes ID = 2;
+  bytes Addr = 3;
+}
+
+enum LogType {
+  LOG_TYPE_COMMAND = 0;
+  LOG_TYPE_NOOP = 1;
+  LOG_TYPE_ADD_PEER_DEPRECATED = 2;
+  LOG_TYPE_REMOVE_PEER_DEPRECATED = 3;
+  LOG_TYPE_BARRIER = 4;
+  LOG_TYPE_CONFIGURATION = 5;
+}
+
+message Log {
+  uint64 Index = 1;
+  uint64 Term = 2;
+  LogType Type = 3;
+  bytes Data = 4;
+  bytes   Extensions = 5;
+  google.protobuf.Timestamp AppendedAt = 6;
+}
+
+message AppendEntriesRequest {
+  RPCHeader RPCHeader = 1;
+  uint64 Term = 2;
+  bytes Leader = 3;
+  uint64 PrevLogEntry = 4;
+  uint64 PrevLogTerm = 5;
+  repeated Log Entries = 6;
+  uint64 LeaderCommitIndex = 7;
+}
+
+message AppendEntriesResponse {
+  RPCHeader RPCHeader = 1;
+  uint64 Term = 2;
+  uint64 LastLog = 3;
+  bool Success = 4;
+  bool NoRetryBackoff = 5;
+}
+
+message AppendEntriesPipelineRequest {
+  string RequestID = 1;
+  AppendEntriesRequest AppendEntriesRequest = 2;
+}
+
+message AppendEntriesPipelineResponse {
+  string RequestID = 1;
+  string Error = 2;
+  AppendEntriesResponse AppendEntriesResponse = 3;
+}
+
+message RequestVoteRequest {
+  RPCHeader RPCHeader = 1;
+  uint64 Term = 2;
+  bytes Candidate = 3;
+  uint64 LastLogIndex = 4;
+  uint64 LastLogTerm = 5;
+  bool LeadershipTransfer = 6;
+}
+
+message RequestVoteResponse {
+  RPCHeader RPCHeader = 1;
+  uint64 Term = 2;
+  bytes Peers = 3;
+  bool Granted = 4;
+}
+
+enum SnapshotVersion {
+  SNAPSHOT_VERSION_MIN = 0;
+  SNAPSHOT_VERSION_MAX = 1;
+}
+
+message InstallSnapshotStream {
+  message InstallSnapshotRequest {
+    RPCHeader RPCHeader = 1;
+    SnapshotVersion SnapshotVersion = 2;
+    uint64 Term = 3;
+    bytes Leader = 4;
+    uint64 LastLogIndex = 5;
+    uint64 LastLogTerm = 6;
+    bytes Peers = 7;
+    bytes Configuration = 8;
+    uint64 ConfigurationIndex = 9;
+    int64 Size = 10;
+  }
+
+  oneof Payload {
+    InstallSnapshotRequest request = 1;
+    bytes Data = 2;
+  };
+}
+
+message InstallSnapshotResponse {
+  RPCHeader RPCHeader = 1;
+  uint64 Term = 2;
+  bool Success = 3;
+}
+
+message TimeoutNowRequest {
+  RPCHeader RPCHeader = 1;
+}
+
+message TimeoutNowResponse {
+  RPCHeader RPCHeader = 1;
+}
+
+service TransportService {
+  rpc AppendEntriesPipeline(stream AppendEntriesPipelineRequest) returns (stream AppendEntriesPipelineResponse) {}
+  rpc AppendEntries(AppendEntriesRequest) returns (AppendEntriesResponse) {}
+  rpc RequestVote(RequestVoteRequest) returns (RequestVoteResponse) {}
+  rpc InstallSnapshot(stream InstallSnapshotStream) returns (InstallSnapshotResponse) {}
+  rpc TimeoutNow(TimeoutNowRequest) returns (TimeoutNowResponse) {}
+}
