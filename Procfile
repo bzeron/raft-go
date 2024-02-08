@@ -1,0 +1,3 @@
+node1: go run main.go --node-id node1 --raft-bind-address :1081 --server-address :1080 --raft-advertise-address 127.0.0.1:1081 --data-volume node1 --raft-clusters node1=127.0.0.1:1081 --raft-clusters node2=127.0.0.1:2081 --raft-clusters node3=127.0.0.1:3081
+node2: go run main.go --node-id node2 --raft-bind-address :2081 --server-address :2080 --raft-advertise-address 127.0.0.1:2081 --data-volume node2 --raft-clusters node1=127.0.0.1:1081 --raft-clusters node2=127.0.0.1:2081 --raft-clusters node3=127.0.0.1:3081
+node3: go run main.go --node-id node3 --raft-bind-address :3081 --server-address :3080 --raft-advertise-address 127.0.0.1:3081 --data-volume node3 --raft-clusters node1=127.0.0.1:1081 --raft-clusters node2=127.0.0.1:2081 --raft-clusters node3=127.0.0.1:3081
